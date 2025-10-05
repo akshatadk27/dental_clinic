@@ -1,0 +1,22 @@
+services:
+  # This section defines your backend web server
+  - type: web
+    name: bright-smile-clinic
+    env: node
+    plan: free
+    region: Oregon(US West) # You can change this to a region closer to you
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: psql
+          name: dental-clinic-database
+          property: connectionString
+
+  # This section defines your PostgreSQL database
+  - type: psql
+    name: dental-clinic-database
+    plan: free
+    region: Oregon(US West) # Use the same region as your web service
