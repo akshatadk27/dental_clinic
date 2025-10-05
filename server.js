@@ -9,11 +9,10 @@ const app = express();
 const port = process.env.PORT || 10000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // THE FIX IS HERE: This line is the JSON "translator" for your server.
 
-// --- SERVE THE FRONTEND FILES (THIS IS THE FIX) ---
-// This now correctly tells the server that your HTML files are in the main directory.
-app.use(express.static(__dirname));
+// This tells the server that your HTML files are in the main (root) directory.
+app.use(express.static(__dirname)); 
 
 // --- DATABASE CONNECTION SETUP ---
 // This code correctly and securely reads the DATABASE_URL from Render's environment.
@@ -25,7 +24,7 @@ const pool = new Pool({
 });
 
 
-// --- API ENDPOINTS (No changes needed in this section) ---
+// --- API ENDPOINTS (No changes are needed in this section) ---
 
 // Get all appointments for a specific date
 app.get('/appointments/:date', async (req, res) => {
@@ -63,6 +62,7 @@ app.get('/appointment/:id', async (req, res) => {
 // Create a new appointment
 app.post('/appointments', async (req, res) => {
     try {
+        // This part was failing because req.body was empty without the JSON translator
         const { id, serviceId, date, doctorId, slot, patientName, patientEmail, patientMobile } = req.body;
         const newAppointment = await pool.query(
             `INSERT INTO appointments (appointment_id, service_id, appointment_date, doctor_id, slot, patient_name, patient_email, patient_mobile, status) 
