@@ -6,7 +6,8 @@ services:
     plan: free
     region: Oregon(US West) # You can change this to a region closer to you
     buildCommand: "npm install"
-    startCommand: "node server.js"
+    startCommand: "npm start"
+
     healthCheckPath: /
     envVars:
       - key: DATABASE_URL
