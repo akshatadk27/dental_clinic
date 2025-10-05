@@ -5,37 +5,30 @@ const path = require('path');
 const { Pool } = require('pg');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+// Render will provide the PORT through an environment variable.
+const port = process.env.PORT || 10000;
 
 app.use(cors());
-app.use(express.static(__dirname)); // serve all files (index.html, admin.html, etc.)
+// This line is a security risk and is not needed. It has been removed.
+// app.use(express.static(__dirname)); 
 
-// Homepage route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Optional admin route
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
-});
+// This new section correctly and safely serves your public files.
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
 
-
-
-
-// --- DATABASE CONNECTION SETUP ---
-// IMPORTANT: Replace these details with your own PostgreSQL credentials
+// --- DATABASE CONNECTION SETUP (THE FIX IS HERE) ---
+// This code now correctly and securely reads the DATABASE_URL from Render's environment.
+// All the old, hardcoded details have been removed.
 const pool = new Pool({
-    user: 'dental_user',
-    host: 'dpg-d3h7cb0gjchc73a9gbv0-a',
-    database: 'dental_clinic_cj4n',
-    password: '21xLWtWfyqtA4vQVOvkq8rbmE0tvKGRR',
-    port: 5432,
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 
-// --- API ENDPOINTS (ROUTES) ---
+// --- API ENDPOINTS (No changes needed in this section) ---
 
 // Get all appointments for a specific date
 app.get('/appointments/:date', async (req, res) => {
@@ -60,7 +53,6 @@ app.get('/appointment/:id', async (req, res) => {
             "SELECT * FROM appointments WHERE appointment_id = $1", 
             [id]
         );
-
         if (appointment.rows.length === 0) {
             return res.status(404).json({ msg: 'Appointment not found' });
         }
@@ -75,7 +67,6 @@ app.get('/appointment/:id', async (req, res) => {
 app.post('/appointments', async (req, res) => {
     try {
         const { id, serviceId, date, doctorId, slot, patientName, patientEmail, patientMobile } = req.body;
-
         const newAppointment = await pool.query(
             `INSERT INTO appointments (appointment_id, service_id, appointment_date, doctor_id, slot, patient_name, patient_email, patient_mobile, status) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Scheduled') 
@@ -97,7 +88,6 @@ app.put('/appointments/:id/complete', async (req, res) => {
             "UPDATE appointments SET status = 'Completed' WHERE appointment_id = $1 RETURNING *",
             [id]
         );
-
         if (updateAppointment.rows.length === 0) {
             return res.status(404).json({ msg: 'Appointment not found' });
         }
@@ -108,31 +98,25 @@ app.put('/appointments/:id/complete', async (req, res) => {
     }
 });
 
-// NEW: Delete an appointment by its ID
+// Delete an appointment
 app.delete('/appointments/:id', async (req, res) => {
     try {
-        const { id } = req.params; // Get the appointment_id from the URL
-
-        // The SQL command to delete a specific row
+        const { id } = req.params;
         const deleteAppointment = await pool.query(
             "DELETE FROM appointments WHERE appointment_id = $1",
             [id]
         );
-
-        // Check if a row was actually deleted
         if (deleteAppointment.rowCount === 0) {
             return res.status(404).json({ msg: 'Appointment not found' });
         }
-
         res.json({ msg: 'Appointment deleted successfully' });
-
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server Error");
     }
 });
 
-// Get all appointments for a specific mobile number (Patient History)
+// Get patient history
 app.get('/appointments/history/:mobile', async (req, res) => {
     try {
         const { mobile } = req.params;
@@ -149,6 +133,6 @@ app.get('/appointments/history/:mobile', async (req, res) => {
 
 
 // Start the server
-app.listen(PORT, () => {
-    console.log(`Dental clinic backend server is running on http://localhost:${PORT}`);
+app.listen(port, () => {
+    console.log(`Dental clinic backend server is running on port ${port}`);
 });
