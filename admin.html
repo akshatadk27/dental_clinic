@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .modal { display: none; }
+        .modal.is-open { display: flex; }
+        @media (max-width: 768px) {
+            table thead { display: none; }
+            table tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #e5e7eb;
+                border-radius: 0.75rem;
+                overflow: hidden;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+                background-color: #fff;
+            }
+            table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem 1.5rem;
+                text-align: right;
+                border-bottom: 1px solid #f3f4f6;
+            }
+            table td:last-child { border-bottom: 0; }
+            table td::before {
+                content: attr(data-label);
+                text-align: left;
+                font-weight: 600;
+                color: #374151;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <script>
+        // This check runs first. If not logged in, it redirects back to the login page.
+        if (sessionStorage.getItem('isAdminLoggedIn') !== 'true') {
+            const currentPath = window.location.pathname;
+            const newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) + '/login.html';
+            window.location.href = window.location.origin + newPath;
+        }
+    </script>
+
+    <div class="flex h-screen">
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white border-b shadow-sm gap-4 sm:gap-0">
+                <div class="flex items-center w-full sm:w-auto">
+                    <h1 class="text-xl font-semibold text-gray-800">🗓️ Appointments:</h1>
+                    <input type="date" id="view-date" class="ml-2 p-2 border border-gray-300 rounded-lg w-full sm:w-auto">
+                </div>
+                <button onclick="logout()" class="text-sm bg-red-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-600 w-full sm:w-auto">Logout</button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-4 sm:p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                            <tr>
+                                <th class="px-6 py-3">Time</th>
+                                <th class="px-6 py-3">Patient</th>
+                                <th class="px-6 py-3">Doctor</th>
+                                <th class="px-6 py-3">Service</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3">Fee</th>
+                                <th class="px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointments-table-body">
+                            <!-- JS will populate this -->
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Patient History Modal -->
+    <div id="patient-history-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 relative">
+             <button onclick="closeModal('patient-history-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <h2 class="text-xl font-bold mb-4">Appointment History for <span id="history-patient-name" class="text-teal-600"></span></h2>
+            <div id="history-table-container" class="max-h-[60vh] overflow-y-auto">
+                 <!-- History table will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        const clinicData = {
+            services: [
+                { id: 's0', name: '🧐 First Visit / Consultation', price: 500 },
+                { id: 's1', name: '🦷 Root Canal', price: 8000 },
+                { id: 's2', name: '✨ Teeth Whitening', price: 5000 },
+                { id: 's4', name: '🩹 Tooth Filling', price: 2500 },
+                { id: 's5', name: '🧼 Check-up & Cleaning', price: 1000 }
+            ],
+            doctors: [
+                { id: 'd1', name: 'Dr. Aarav Sharma'},
+                { id: 'd2', name: 'Dr. Priya Verma'},
+                { id: 'd3', name: 'Dr. Rohan Gupta'},
+                { id: 'd4', name: 'Dr. Sneha Patel'},
+                { id: 'd5', name: 'Dr. Vikram Singh'},
+                { id: 'd6', name: 'Dr. Ananya Rao'}
+            ]
+        };
+        
+        async function renderAppointments() {
+            const tableBody = document.getElementById('appointments-table-body');
+            const viewDate = document.getElementById('view-date').value;
+            
+            tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16 text-gray-500">Loading...</td></tr>`;
+
+            try {
+                const response = await fetch(`${API_URL}/appointments/${viewDate}`);
+                if (!response.ok) throw new Error('Could not fetch appointments');
+                const appointments = await response.json();
+
+                tableBody.innerHTML = '';
+                
+                if (appointments.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16 text-gray-500">No appointments for this day.</td></tr>`;
+                    return;
+                }
+                
+                appointments.forEach(apt => {
+                    const doctor = clinicData.doctors.find(d => d.id === apt.doctor_id) || { name: 'N/A' };
+                    const service = clinicData.services.find(s => s.id === apt.service_id) || { name: 'N/A', price: 0 };
+                    
+                    const statusInfo = apt.status === 'Completed' 
+                        ? { emoji: '✅', color: 'bg-green-100 text-green-800' } 
+                        : { emoji: '🕒', color: 'bg-yellow-100 text-yellow-800' };
+
+                    const actionButton = `
+                         ${apt.status === 'Scheduled' ? `<button onclick="completeAppointment('${apt.appointment_id}')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded-full text-xs">✓ Complete</button>` : ''}
+                        <button onclick="deleteAppointment('${apt.appointment_id}')" class="ml-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-full text-xs">Delete</button>`;
+                    
+                    const patientCellHtml = `
+                        <button onclick="showPatientHistory('${apt.patient_mobile}', '${apt.patient_name}')" class="font-semibold text-teal-600 hover:underline text-left">
+                            ${apt.patient_name}
+                        </button>
+                        <br>
+                        <span class="text-xs text-gray-500">${apt.patient_mobile || 'N/A'}</span>`;
+
+                    const row = document.createElement('tr');
+                    row.className = 'bg-white border-b hover:bg-gray-50';
+                    row.innerHTML = `
+                        <td data-label="🕒 Time" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${apt.slot}</td>
+                        <td data-label="👤 Patient" class="px-6 py-4">${patientCellHtml}</td>
+                        <td data-label="🩺 Doctor" class="px-6 py-4">${doctor.name}</td>
+                        <td data-label="🦷 Service" class="px-6 py-4"><span class="bg-teal-100 text-teal-800 text-xs font-semibold px-2.5 py-1 rounded-full">${service.name.split(' ').slice(1).join(' ')}</span></td>
+                        <td data-label="Status" class="px-6 py-4"><span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusInfo.color}">${statusInfo.emoji} ${apt.status}</span></td>
+                        <td data-label="Fee" class="px-6 py-4 font-semibold text-gray-800">₹${service.price}</td>
+                        <td data-label="Actions" class="px-6 py-4">${actionButton}</td>`;
+                    tableBody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error("Error fetching appointments:", error);
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16 text-red-600"><b>Could not connect to server.</b><br>Is your server.js file running in the terminal?</td></tr>`;
+            }
+        }
+
+        async function showPatientHistory(mobile, name) {
+            document.getElementById('history-patient-name').textContent = name;
+            const container = document.getElementById('history-table-container');
+            container.innerHTML = '<p>Loading history...</p>';
+            openModal('patient-history-modal');
+
+            try {
+                const response = await fetch(`${API_URL}/appointments/history/${mobile}`);
+                if (!response.ok) throw new Error('Could not fetch history');
+                const history = await response.json();
+
+                if (history.length === 0) {
+                    container.innerHTML = `<p class="text-center text-gray-600 p-4">No appointment history found.</p>`;
+                    return;
+                }
+
+                let tableHtml = `
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2">Date</th>
+                                <th class="px-4 py-2">Service</th>
+                                <th class="px-4 py-2">Doctor</th>
+                                <th class="px-4 py-2">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+                
+                history.forEach(apt => {
+                    const service = clinicData.services.find(s => s.id === apt.service_id) || { name: 'N/A' };
+                    const doctor = clinicData.doctors.find(d => d.id === apt.doctor_id) || { name: 'N/A' };
+                    const formattedDate = new Date(apt.appointment_date).toLocaleDateString('en-CA');
+                    
+                    tableHtml += `
+                        <tr class="border-b">
+                            <td class="px-4 py-2">${formattedDate}</td>
+                            <td class="px-4 py-2">${service.name.split(' ').slice(1).join(' ')}</td>
+                            <td class="px-4 py-2">${doctor.name}</td>
+                            <td class="px-4 py-2">
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${apt.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${apt.status}
+                                </span>
+                            </td>
+                        </tr>`;
+                });
+
+                tableHtml += '</tbody></table>';
+                container.innerHTML = tableHtml;
+
+            } catch (error) {
+                console.error("Error fetching patient history:", error);
+                container.innerHTML = `<p class="text-red-600 font-semibold text-center p-4">Could not retrieve history.</p>`;
+            }
+        }
+
+        async function completeAppointment(appointmentId) {
+            if (confirm('Are you sure you want to mark this appointment as completed?')) {
+                try {
+                    const response = await fetch(`${API_URL}/appointments/${appointmentId}/complete`, { method: 'PUT' });
+                    if (!response.ok) throw new Error('Failed to update appointment');
+                    renderAppointments();
+                } catch (error) {
+                    console.error("Error completing appointment:", error);
+                    alert("Could not update the appointment. Please try again.");
+                }
+            }
+        }
+
+        async function deleteAppointment(appointmentId) {
+    // It's critical to ask for confirmation to prevent accidental deletions
+            if (confirm('Are you sure you want to permanently delete this appointment?')) {
+                try {
+            // Send the DELETE request to your backend server
+                    const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {method: 'DELETE'});
+                    if (!response.ok) {throw new Error('Failed to delete appointment');}
+            // If deletion is successful, refresh the appointment list to show the change
+                    renderAppointments();
+                } catch (error) {
+                   console.error("Error deleting appointment:", error);
+                   alert("Could not delete the appointment. Please try again.");
+        }
+    }
+}        
+
+        function logout() {
+            sessionStorage.removeItem('isAdminLoggedIn');
+            const currentPath = window.location.pathname;
+            const newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) + '/login.html';
+            window.location.href = window.location.origin + newPath;
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('is-open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('is-open'); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const viewDateInput = document.getElementById('view-date');
+            viewDateInput.value = new Date().toISOString().split('T')[0];
+            renderAppointments();
+            viewDateInput.addEventListener('change', renderAppointments);
+            window.addEventListener('resize', renderAppointments);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bright Smile Dental Clinic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; /* bg-slate-50 */
+        }
+        .modal { display: none; }
+        .modal.is-open { display: flex; }
+        .slot-btn { transition: all 0.2s ease-in-out; }
+        .slot-btn:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .hero-bg {
+            background-image: url('https://placehold.co/1200x800/e0f2f1/334155?text=Bright+Smile+Clinic');
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-teal-600">🦷 Bright Smile Dental</h1>
+            <div class="flex space-x-2">
+                <button id="history-btn" class="bg-white border border-teal-600 text-teal-600 font-semibold px-4 py-2 rounded-lg hover:bg-teal-50 transition">My History</button>
+                <button id="check-status-btn" class="bg-teal-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-teal-700 transition">Check Status</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <div class="relative hero-bg">
+            <div class="absolute inset-0 bg-teal-800 bg-opacity-60"></div>
+            <div class="relative container mx-auto px-6 py-24 text-center text-white">
+                <h2 class="text-5xl font-extrabold mb-4">Expert Dental Care You Can Trust</h2>
+                <p class="text-xl max-w-3xl mx-auto">Your journey to a healthier, brighter smile starts here. Book your appointment with our specialists today.</p>
+            </div>
+        </div>
+
+        <div class="container mx-auto px-6 py-12 -mt-16">
+            <!-- Booking Form -->
+            <div id="booking-card" class="bg-white p-8 rounded-xl shadow-2xl border border-gray-200 max-w-4xl mx-auto">
+                <h3 class="text-3xl font-bold text-gray-800 mb-6 text-center">Book Your Appointment</h3>
+                <div class="grid md:grid-cols-2 gap-6 items-end">
+                    <div>
+                        <label for="service-select" class="block text-sm font-medium text-gray-700 mb-1">1. Select a Service</label>
+                        <select id="service-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></select>
+                    </div>
+                    <div>
+                        <label for="appointment-date" class="block text-sm font-medium text-gray-700 mb-1">2. Select a Date</label>
+                        <input type="date" id="appointment-date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <button id="find-slots-btn" class="w-full bg-teal-600 text-white font-bold py-3 rounded-lg hover:bg-teal-700 transition duration-300 text-lg">
+                            Find Available Slots →
+                        </button>
+                    </div>
+                </div>
+                <div id="slots-container" class="mt-8 hidden">
+                    <!-- Available slots will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="py-12">
+            <div class="container mx-auto px-6">
+                 <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">Why Choose Us?</h3>
+                <div class="grid md:grid-cols-3 gap-8 text-center">
+                    <div class="bg-white p-6 rounded-lg border border-slate-200">
+                        <div class="text-4xl text-teal-500 mb-3">🩺</div>
+                        <h4 class="font-bold text-lg">Expert Specialists</h4>
+                        <p class="text-gray-600 text-sm">Our team consists of highly qualified and experienced dental professionals.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg border border-slate-200">
+                        <div class="text-4xl text-teal-500 mb-3">🔬</div>
+                        <h4 class="font-bold text-lg">Modern Technology</h4>
+                        <p class="text-gray-600 text-sm">We use state-of-the-art equipment for accurate diagnoses and treatments.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg border border-slate-200">
+                        <div class="text-4xl text-teal-500 mb-3">😊</div>
+                        <h4 class="font-bold text-lg">Patient Comfort</h4>
+                        <p class="text-gray-600 text-sm">We prioritize your comfort and ensure a stress-free experience.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctors Section -->
+        <div class="bg-white py-12">
+            <div class="container mx-auto px-6">
+                <h3 class="text-3xl font-bold text-gray-800 mb-8 text-center">Meet Our Specialists</h3>
+                <div id="doctors-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Doctors will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="booking-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+            <h2 class="text-xl font-bold mb-2">Confirm Your Details</h2>
+            <p class="text-sm mb-4 text-gray-600">You are booking for <strong id="modal-service-name"></strong> at <strong id="modal-slot-time"></strong> with <strong id="modal-doctor-name"></strong>.</p>
+            <div class="space-y-3">
+                <input type="text" id="patient-name" placeholder="Full Name" class="w-full p-2 border border-gray-300 rounded-md">
+                <input type="email" id="patient-email" placeholder="Email Address (Optional)" class="w-full p-2 border border-gray-300 rounded-md">
+                <input type="tel" id="patient-mobile" placeholder="Mobile Number" class="w-full p-2 border border-gray-300 rounded-md">
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button onclick="closeModal('booking-modal')" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="confirm-booking-btn" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">Confirm Booking ✓</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmation-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-8 text-center">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-2xl font-bold text-green-600 mb-3">Appointment Confirmed!</h2>
+            <p class="text-gray-600 mb-4">Your appointment ID is:</p>
+            <p id="appointment-id" class="text-lg font-mono bg-gray-100 p-2 rounded-md text-gray-800 mb-2"></p>
+            <p class="text-gray-600 mb-4">Treatment Fee: <strong id="confirmation-fee" class="text-gray-800"></strong></p>
+            <p class="text-sm text-gray-500">Please keep this ID for future reference.</p>
+            <button onclick="closeModal('confirmation-modal')" class="mt-6 bg-teal-600 text-white w-full py-2 rounded-md hover:bg-teal-700">Done</button>
+        </div>
+    </div>
+    
+    <div id="status-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+            <button onclick="closeModal('status-modal')" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <h2 class="text-xl font-bold mb-4">Check Appointment Status</h2>
+            <div class="flex space-x-2">
+                <input type="text" id="status-check-id" placeholder="Enter your Appointment ID" class="w-full p-2 border border-gray-300 rounded-md">
+                <button id="check-id-btn" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">Check</button>
+            </div>
+            <div id="status-result" class="mt-4 text-center p-4 bg-gray-50 rounded-md hidden"></div>
+        </div>
+    </div>
+
+    <!-- Patient History Modal -->
+    <div id="history-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+            <button onclick="closeModal('history-modal')" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <h2 class="text-xl font-bold mb-4">View Your Appointment History</h2>
+            <p class="text-gray-600 mb-4 text-sm">Enter the mobile number you used to book your appointments.</p>
+            <div class="flex space-x-2">
+                <input type="tel" id="history-mobile-input" placeholder="Enter your Mobile Number" class="w-full p-2 border border-gray-300 rounded-md">
+                <button id="find-history-btn" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">Find</button>
+            </div>
+            <div id="history-result" class="mt-4 hidden max-h-80 overflow-y-auto">
+                <!-- History will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const API_URL = 'http://localhost:3000'; // The address of your backend server
+
+        const clinicData = {
+            services: [
+                { id: 's0', name: '🧐 First Visit / Consultation', price: 500 },
+                { id: 's1', name: '🦷 Root Canal', price: 8000 },
+                { id: 's2', name: '✨ Teeth Whitening', price: 5000 },
+                { id: 's4', name: '🩹 Tooth Filling', price: 2500 },
+                { id: 's5', name: '🧼 Check-up & Cleaning', price: 1000 }
+            ],
+            doctors: [
+                { id: 'd1', name: 'Dr. Aarav Sharma', specializations: ['🦷 Root Canal', '🩹 Tooth Filling']},
+                { id: 'd2', name: 'Dr. Priya Verma', specializations: ['✨ Teeth Whitening', '🧼 Check-up & Cleaning']},
+                { id: 'd3', name: 'Dr. Rohan Gupta', specializations: ['🩹 Tooth Filling', '🧼 Check-up & Cleaning', '🧐 First Visit / Consultation']},
+                { id: 'd4', name: 'Dr. Sneha Patel', specializations: ['🦷 Root Canal', '🧐 First Visit / Consultation']},
+                { id: 'd5', name: 'Dr. Vikram Singh', specializations: ['✨ Teeth Whitening', '🧼 Check-up & Cleaning']},
+                { id: 'd6', name: 'Dr. Ananya Rao', specializations: ['🦷 Root Canal', '✨ Teeth Whitening']}
+            ],
+            timeSlots: ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"]
+        };
+        let tempBookingInfo = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateServices();
+            populateDoctors();
+            document.getElementById('appointment-date').min = new Date().toISOString().split("T")[0];
+            
+            document.getElementById('find-slots-btn').addEventListener('click', renderAllSlots);
+            document.getElementById('confirm-booking-btn').addEventListener('click', confirmBooking);
+            document.getElementById('check-status-btn').addEventListener('click', () => openModal('status-modal'));
+            document.getElementById('check-id-btn').addEventListener('click', checkAppointmentStatus);
+            document.getElementById('history-btn').addEventListener('click', () => openModal('history-modal'));
+            document.getElementById('find-history-btn').addEventListener('click', findPatientHistory);
+        });
+
+        function populateServices() {
+            const serviceSelect = document.getElementById('service-select');
+            clinicData.services.forEach(service => {
+                const option = document.createElement('option');
+                option.value = service.id;
+                option.textContent = `${service.name.split(' ').slice(1).join(' ')} (₹${service.price})`;
+                option.dataset.name = service.name;
+                serviceSelect.appendChild(option);
+            });
+        }
+        
+        function populateDoctors() {
+            const doctorsList = document.getElementById('doctors-list');
+            clinicData.doctors.forEach(doc => {
+                const doctorCard = document.createElement('div');
+                doctorCard.className = 'bg-slate-50 p-6 rounded-lg border border-slate-200 text-center transition hover:shadow-lg hover:-translate-y-1';
+                doctorCard.innerHTML = `
+                    <h4 class="text-xl font-bold text-gray-800">${doc.name}</h4>
+                    <p class="text-teal-600 font-medium">Specialist</p>
+                    <div class="mt-4 space-y-2 text-sm text-gray-600">
+                        ${doc.specializations.map(spec => `<div>${spec}</div>`).join('')}
+                    </div>`;
+                doctorsList.appendChild(doctorCard);
+            });
+        }
+
+        async function renderAllSlots() {
+            const serviceSelect = document.getElementById('service-select');
+            const serviceId = serviceSelect.value;
+            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+            const serviceName = selectedOption.dataset.name;
+            const date = document.getElementById('appointment-date').value;
+
+            if (!date) {
+                alert("Please select a date first.");
+                return;
+            }
+            
+            const findBtn = document.getElementById('find-slots-btn');
+            findBtn.textContent = 'Searching...';
+            findBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/appointments/${date}`);
+                if (!response.ok) throw new Error('Could not fetch appointments');
+                const bookedAppointments = await response.json();
+
+                const availableDoctors = clinicData.doctors.filter(d => d.specializations.includes(serviceName));
+                const slotsContainer = document.getElementById('slots-container');
+                slotsContainer.innerHTML = '';
+                
+                availableDoctors.forEach(doctor => {
+                    const doctorDiv = document.createElement('div');
+                    doctorDiv.className = 'mb-6 p-4 border-t border-gray-200';
+                    doctorDiv.innerHTML = `<h4 class="font-semibold text-lg text-gray-700 mb-3">${doctor.name}</h4>`;
+                    
+                    const slotsGrid = document.createElement('div');
+                    slotsGrid.className = 'grid grid-cols-3 sm:grid-cols-4 gap-2';
+                    
+                    const bookedSlotsForDoctor = bookedAppointments
+                        .filter(apt => apt.doctor_id === doctor.id)
+                        .map(apt => apt.slot);
+
+                    clinicData.timeSlots.forEach(slot => {
+                        const isBooked = bookedSlotsForDoctor.includes(slot);
+                        const slotButton = document.createElement('button');
+                        slotButton.textContent = slot;
+                        slotButton.className = `slot-btn p-2 border rounded-lg text-sm ${isBooked ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-teal-50 border-teal-200 text-teal-800 hover:bg-teal-100'}`;
+                        slotButton.disabled = isBooked;
+                        if (!isBooked) {
+                            slotButton.onclick = () => openBookingModal(serviceId, date, doctor.id, slot);
+                        }
+                        slotsGrid.appendChild(slotButton);
+                    });
+                    doctorDiv.appendChild(slotsGrid);
+                    slotsContainer.appendChild(doctorDiv);
+                });
+                slotsContainer.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error fetching slots:", error);
+                alert("Could not connect to the server. Please make sure the backend is running.");
+            } finally {
+                findBtn.textContent = 'Find Available Slots →';
+                findBtn.disabled = false;
+            }
+        }
+
+        function openBookingModal(serviceId, date, doctorId, slot) {
+            tempBookingInfo = { serviceId, date, doctorId, slot };
+            const service = clinicData.services.find(s => s.id === serviceId);
+            const doctor = clinicData.doctors.find(d => d.id === doctorId);
+            
+            document.getElementById('modal-service-name').textContent = service.name;
+            document.getElementById('modal-slot-time').textContent = slot;
+            document.getElementById('modal-doctor-name').textContent = doctor.name;
+            openModal('booking-modal');
+        }
+
+        async function confirmBooking() {
+            const patientName = document.getElementById('patient-name').value;
+            const patientEmail = document.getElementById('patient-email').value;
+            const patientMobile = document.getElementById('patient-mobile').value;
+
+            if (!patientName || !patientMobile) {
+                alert("Please fill in your Name and Mobile Number.");
+                return;
+            }
+            
+            const newAppointmentData = {
+                id: 'apt-' + Date.now(),
+                serviceId: tempBookingInfo.serviceId,
+                date: tempBookingInfo.date,
+                doctorId: tempBookingInfo.doctorId,
+                slot: tempBookingInfo.slot,
+                patientName: patientName,
+                patientEmail: patientEmail,
+                patientMobile: patientMobile
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/appointments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newAppointmentData)
+                });
+
+                if (!response.ok) throw new Error('Booking failed');
+                
+                const createdAppointment = await response.json();
+                
+                const service = clinicData.services.find(s => s.id === createdAppointment.service_id);
+                document.getElementById('appointment-id').textContent = createdAppointment.appointment_id;
+                document.getElementById('confirmation-fee').textContent = `₹${service.price}`;
+                
+                closeModal('booking-modal');
+                openModal('confirmation-modal');
+                renderAllSlots(); // Refresh slots
+
+            } catch (error) {
+                console.error("Error confirming booking:", error);
+                alert("Could not save the appointment. Please try again.");
+            }
+        }
+        
+        async function checkAppointmentStatus() {
+            const aptId = document.getElementById('status-check-id').value.trim();
+            if (!aptId) return;
+
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = `<p>Checking...</p>`;
+
+            try {
+                const response = await fetch(`${API_URL}/appointment/${aptId}`);
+                
+                if (response.status === 404) {
+                     resultDiv.innerHTML = `<p class="text-red-600 font-semibold">Appointment ID not found.</p>`;
+                     return;
+                }
+
+                if (!response.ok) throw new Error('Failed to fetch status');
+
+                const appointment = await response.json();
+                const service = clinicData.services.find(s => s.id === appointment.service_id);
+                resultDiv.innerHTML = `<p class="mb-2"><strong>Status:</strong> <span class="font-semibold ${appointment.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}">${appointment.status}</span></p>
+                                       <p><strong>Final Bill:</strong> <span class="font-semibold text-gray-800">₹${service.price}</span></p>`;
+            } catch (error) {
+                 console.error("Error checking status:", error);
+                 resultDiv.innerHTML = `<p class="text-red-600 font-semibold">Could not check status. Server may be down.</p>`;
+            }
+        }
+        
+        async function findPatientHistory() {
+            const mobile = document.getElementById('history-mobile-input').value.trim();
+            if (!mobile) {
+                alert('Please enter a mobile number.');
+                return;
+            }
+
+            const resultDiv = document.getElementById('history-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = `<p>Searching for history...</p>`;
+            
+            try {
+                const response = await fetch(`${API_URL}/appointments/history/${mobile}`);
+                if (!response.ok) throw new Error('Could not fetch history');
+
+                const history = await response.json();
+                
+                if (history.length === 0) {
+                    resultDiv.innerHTML = `<p class="text-center text-gray-600 p-4">No appointments found for this mobile number.</p>`;
+                    return;
+                }
+
+                let historyHtml = '<div class="space-y-3">';
+                history.forEach(apt => {
+                    const service = clinicData.services.find(s => s.id === apt.service_id) || { name: 'N/A' };
+                    const doctor = clinicData.doctors.find(d => d.id === apt.doctor_id) || { name: 'N/A' };
+                    const formattedDate = new Date(apt.appointment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                    
+historyHtml += `
+    <div class="p-3 border rounded-lg bg-gray-50">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="font-bold text-gray-800">${service.name.split(' ').slice(1).join(' ')}</p>
+                <p class="text-sm text-gray-600">with ${doctor.name}</p>
+            </div>
+            <span class="text-xs font-semibold px-2 py-1 rounded-full ${apt.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${apt.status}</span>
+        </div>
+        <p class="text-sm text-gray-500 mt-2">${formattedDate} at ${apt.slot}</p>
+        <p class="text-xs text-gray-400 mt-2 font-mono">ID: ${apt.appointment_id}</p>
+        
+        <!-- NEW: Conditionally add a cancel button -->
+        <div class="text-right mt-2">
+            ${apt.status === 'Scheduled' ? 
+            `<button onclick="deleteUserAppointment('${apt.appointment_id}')" class="text-xs bg-red-100 text-red-700 font-semibold px-3 py-1 rounded-full hover:bg-red-200">
+                Cancel Appointment
+             </button>` : ''}
+        </div>
+    </div>
+`;
+                    
+                });
+                historyHtml += '</div>';
+                resultDiv.innerHTML = historyHtml;
+
+            } catch(error) {
+                console.error("Error fetching patient history:", error);
+                resultDiv.innerHTML = `<p class="text-red-600 font-semibold text-center p-4">Could not retrieve history. Server may be down.</p>`;
+            }
+        }
+        
+
+async function deleteUserAppointment(appointmentId) {
+    // Ask the user for confirmation to prevent accidents
+    if (confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
+        try {
+            // Send the DELETE request to your backend server
+            const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to cancel the appointment');
+            }
+            
+            // If successful, automatically refresh the history view 
+            // so the user sees the appointment disappear.
+            findPatientHistory();
+
+        } catch (error) {
+            console.error("Error canceling appointment:", error);
+            alert("Could not cancel the appointment. Please try again.");
+        }
+    }
+}
+
+
+        function openModal(id) { document.getElementById(id).classList.add('is-open'); }
+        
+        function closeModal(id) { 
+            document.getElementById(id).classList.remove('is-open'); 
+            if (id === 'status-modal' || id === 'history-modal') {
+                const statusResult = document.getElementById('status-result');
+                if (statusResult) statusResult.classList.add('hidden');
+
+                const statusCheckId = document.getElementById('status-check-id');
+                if (statusCheckId) statusCheckId.value = '';
+
+                const historyResult = document.getElementById('history-result');
+                if (historyResult) historyResult.classList.add('hidden');
+
+                const historyMobileInput = document.getElementById('history-mobile-input');
+                if (historyMobileInput) historyMobileInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
