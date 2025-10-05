@@ -29,7 +29,7 @@ app.get('/admin', (req, res) => {
 const pool = new Pool({
     user: 'dental_user',
     host: 'dpg-d3h7cb0gjchc73a9gbv0-a',
-    database: 'dental-clinic-db',
+    database: 'dental_clinic_cj4n',
     password: '21xLWtWfyqtA4vQVOvkq8rbmE0tvKGRR',
     port: 5432,
 });
