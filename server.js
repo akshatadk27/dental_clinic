@@ -1,15 +1,30 @@
 // Import required packages
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
+const path = require('path');
 
-// Initialize the Express app
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors()); // Allows your frontend to talk to this backend
-app.use(express.json()); // Allows the server to understand JSON data
+app.use(cors());
+app.use(express.static(__dirname)); // serve all files (index.html, admin.html, etc.)
+
+// Homepage route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Optional admin route
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+
+
 
 // --- DATABASE CONNECTION SETUP ---
 // IMPORTANT: Replace these details with your own PostgreSQL credentials
