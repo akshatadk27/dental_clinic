@@ -151,6 +151,6 @@ app.get('/appointments/history/:mobile', async (req, res) => {
 
 
 // Start the server
-app.listen(port, () => {
-    console.log(`Dental clinic backend server is running on http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Dental clinic backend server is running on http://localhost:${PORT}`);
 });
