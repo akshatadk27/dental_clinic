@@ -1,0 +1,140 @@
+// Import required packages
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
+
+// Initialize the Express app
+const app = express();
+const port = 3000;
+
+// Middleware
+app.use(cors()); // Allows your frontend to talk to this backend
+app.use(express.json()); // Allows the server to understand JSON data
+
+// --- DATABASE CONNECTION SETUP ---
+// IMPORTANT: Replace these details with your own PostgreSQL credentials
+const pool = new Pool({
+    user: 'postgres', // Your PostgreSQL username (default is often 'postgres')
+    host: 'localhost',
+    database: 'dental_clinic', // The database name you created in pgAdmin
+    password: 'AK27', // The password you set for your user
+    port: 5432, // The default PostgreSQL port
+});
+
+// --- API ENDPOINTS (ROUTES) ---
+
+// Get all appointments for a specific date
+app.get('/appointments/:date', async (req, res) => {
+    try {
+        const { date } = req.params;
+        const allAppointments = await pool.query(
+            "SELECT * FROM appointments WHERE appointment_date = $1 ORDER BY slot ASC", 
+            [date]
+        );
+        res.json(allAppointments.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Get a single appointment by its ID
+app.get('/appointment/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const appointment = await pool.query(
+            "SELECT * FROM appointments WHERE appointment_id = $1", 
+            [id]
+        );
+
+        if (appointment.rows.length === 0) {
+            return res.status(404).json({ msg: 'Appointment not found' });
+        }
+        res.json(appointment.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Create a new appointment
+app.post('/appointments', async (req, res) => {
+    try {
+        const { id, serviceId, date, doctorId, slot, patientName, patientEmail, patientMobile } = req.body;
+
+        const newAppointment = await pool.query(
+            `INSERT INTO appointments (appointment_id, service_id, appointment_date, doctor_id, slot, patient_name, patient_email, patient_mobile, status) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Scheduled') 
+             RETURNING *`,
+            [id, serviceId, date, doctorId, slot, patientName, patientEmail, patientMobile]
+        );
+        res.status(201).json(newAppointment.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Mark an appointment as 'Completed'
+app.put('/appointments/:id/complete', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateAppointment = await pool.query(
+            "UPDATE appointments SET status = 'Completed' WHERE appointment_id = $1 RETURNING *",
+            [id]
+        );
+
+        if (updateAppointment.rows.length === 0) {
+            return res.status(404).json({ msg: 'Appointment not found' });
+        }
+        res.json({ msg: 'Appointment updated successfully', appointment: updateAppointment.rows[0] });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// NEW: Delete an appointment by its ID
+app.delete('/appointments/:id', async (req, res) => {
+    try {
+        const { id } = req.params; // Get the appointment_id from the URL
+
+        // The SQL command to delete a specific row
+        const deleteAppointment = await pool.query(
+            "DELETE FROM appointments WHERE appointment_id = $1",
+            [id]
+        );
+
+        // Check if a row was actually deleted
+        if (deleteAppointment.rowCount === 0) {
+            return res.status(404).json({ msg: 'Appointment not found' });
+        }
+
+        res.json({ msg: 'Appointment deleted successfully' });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Get all appointments for a specific mobile number (Patient History)
+app.get('/appointments/history/:mobile', async (req, res) => {
+    try {
+        const { mobile } = req.params;
+        const patientHistory = await pool.query(
+            "SELECT * FROM appointments WHERE patient_mobile = $1 ORDER BY appointment_date DESC",
+            [mobile]
+        );
+        res.json(patientHistory.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+
+// Start the server
+app.listen(port, () => {
+    console.log(`Dental clinic backend server is running on http://localhost:${port}`);
+});
