@@ -5,7 +5,7 @@ const path = require('path');
 const { Pool } = require('pg');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.static(__dirname)); // serve all files (index.html, admin.html, etc.)
@@ -27,12 +27,13 @@ app.get('/admin', (req, res) => {
 // --- DATABASE CONNECTION SETUP ---
 // IMPORTANT: Replace these details with your own PostgreSQL credentials
 const pool = new Pool({
-    user: 'postgres', // Your PostgreSQL username (default is often 'postgres')
-    host: 'localhost',
-    database: 'dental_clinic', // The database name you created in pgAdmin
-    password: 'AK27', // The password you set for your user
-    port: 5432, // The default PostgreSQL port
+    user: 'dental_user',
+    host: 'dpg-d3h7cb0gjchc73a9gbv0-a',
+    database: 'dental-clinic-db',
+    password: '21xLWtWfyqtA4vQVOvkq8rbmE0tvKGRR',
+    port: 5432,
 });
+
 
 // --- API ENDPOINTS (ROUTES) ---
 
