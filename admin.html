@@ -95,7 +95,8 @@
     </div>
 
     <script>
-        const API_URL = 'https://bright-smile-clinic.onrender.com';
+        const API_URL = ''; // This tells the website to send requests to the same server it was loaded from.
+
         const clinicData = {
             services: [
                 { id: 's0', name: '🧐 First Visit / Consultation', price: 500 },
@@ -140,9 +141,11 @@
                         ? { emoji: '✅', color: 'bg-green-100 text-green-800' } 
                         : { emoji: '🕒', color: 'bg-yellow-100 text-yellow-800' };
 
-                    const actionButton = `
-                         ${apt.status === 'Scheduled' ? `<button onclick="completeAppointment('${apt.appointment_id}')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded-full text-xs">✓ Complete</button>` : ''}
-                        <button onclick="deleteAppointment('${apt.appointment_id}')" class="ml-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-full text-xs">Delete</button>`;
+                    let actionButton = '';
+                    if (apt.status === 'Scheduled') {
+                        actionButton += `<button onclick="completeAppointment('${apt.appointment_id}')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded-full text-xs">✓ Complete</button>`;
+                    }
+                    actionButton += `<button onclick="deleteAppointment('${apt.appointment_id}')" class="ml-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-full text-xs">Delete</button>`;
                     
                     const patientCellHtml = `
                         <button onclick="showPatientHistory('${apt.patient_mobile}', '${apt.patient_name}')" class="font-semibold text-teal-600 hover:underline text-left">
@@ -166,7 +169,7 @@
 
             } catch (error) {
                 console.error("Error fetching appointments:", error);
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16 text-red-600"><b>Could not connect to server.</b><br>Is your server.js file running in the terminal?</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16 text-red-600"><b>Could not connect to server.</b><br>Please check the server status and refresh.</td></tr>`;
             }
         }
 
@@ -239,20 +242,19 @@
         }
 
         async function deleteAppointment(appointmentId) {
-    // It's critical to ask for confirmation to prevent accidental deletions
             if (confirm('Are you sure you want to permanently delete this appointment?')) {
                 try {
-            // Send the DELETE request to your backend server
-                    const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {method: 'DELETE'});
-                    if (!response.ok) {throw new Error('Failed to delete appointment');}
-            // If deletion is successful, refresh the appointment list to show the change
+                    const response = await fetch(`${API_URL}/appointments/${appointmentId}`, { method: 'DELETE' });
+                    if (!response.ok) {
+                        throw new Error('Failed to delete appointment');
+                    }
                     renderAppointments();
                 } catch (error) {
                    console.error("Error deleting appointment:", error);
                    alert("Could not delete the appointment. Please try again.");
-        }
-    }
-}        
+                }
+            }
+        }        
 
         function logout() {
             sessionStorage.removeItem('isAdminLoggedIn');

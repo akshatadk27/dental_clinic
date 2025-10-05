@@ -165,7 +165,7 @@
 
 
     <script>
-        const API_URL = 'https://bright-smile-clinic.onrender.com'; // The address of your backend server
+        const API_URL = ''; // This tells the website to send requests to the same server it was loaded from.
 
         const clinicData = {
             services: [
@@ -281,7 +281,7 @@
 
             } catch (error) {
                 console.error("Error fetching slots:", error);
-                alert("Could not connect to the server. Please make sure the backend is running.");
+                alert("Could not connect to the server. Please make sure the backend is running and accessible.");
             } finally {
                 findBtn.textContent = 'Find Available Slots →';
                 findBtn.disabled = false;
@@ -401,28 +401,25 @@
                     const doctor = clinicData.doctors.find(d => d.id === apt.doctor_id) || { name: 'N/A' };
                     const formattedDate = new Date(apt.appointment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
                     
-historyHtml += `
-    <div class="p-3 border rounded-lg bg-gray-50">
-        <div class="flex justify-between items-start">
-            <div>
-                <p class="font-bold text-gray-800">${service.name.split(' ').slice(1).join(' ')}</p>
-                <p class="text-sm text-gray-600">with ${doctor.name}</p>
-            </div>
-            <span class="text-xs font-semibold px-2 py-1 rounded-full ${apt.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${apt.status}</span>
-        </div>
-        <p class="text-sm text-gray-500 mt-2">${formattedDate} at ${apt.slot}</p>
-        <p class="text-xs text-gray-400 mt-2 font-mono">ID: ${apt.appointment_id}</p>
-        
-        <!-- NEW: Conditionally add a cancel button -->
-        <div class="text-right mt-2">
-            ${apt.status === 'Scheduled' ? 
-            `<button onclick="deleteUserAppointment('${apt.appointment_id}')" class="text-xs bg-red-100 text-red-700 font-semibold px-3 py-1 rounded-full hover:bg-red-200">
-                Cancel Appointment
-             </button>` : ''}
-        </div>
-    </div>
-`;
-                    
+                    historyHtml += `
+                        <div class="p-3 border rounded-lg bg-gray-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-gray-800">${service.name.split(' ').slice(1).join(' ')}</p>
+                                    <p class="text-sm text-gray-600">with ${doctor.name}</p>
+                                </div>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${apt.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${apt.status}</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-2">${formattedDate} at ${apt.slot}</p>
+                            <p class="text-xs text-gray-400 mt-2 font-mono">ID: ${apt.appointment_id}</p>
+                            <div class="text-right mt-2">
+                                ${apt.status === 'Scheduled' ? 
+                                `<button onclick="deleteUserAppointment('${apt.appointment_id}')" class="text-xs bg-red-100 text-red-700 font-semibold px-3 py-1 rounded-full hover:bg-red-200">
+                                    Cancel Appointment
+                                 </button>` : ''}
+                            </div>
+                        </div>
+                    `;
                 });
                 historyHtml += '</div>';
                 resultDiv.innerHTML = historyHtml;
@@ -432,32 +429,23 @@ historyHtml += `
                 resultDiv.innerHTML = `<p class="text-red-600 font-semibold text-center p-4">Could not retrieve history. Server may be down.</p>`;
             }
         }
-        
 
-async function deleteUserAppointment(appointmentId) {
-    // Ask the user for confirmation to prevent accidents
-    if (confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
-        try {
-            // Send the DELETE request to your backend server
-            const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to cancel the appointment');
+        async function deleteUserAppointment(appointmentId) {
+            if (confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
+                try {
+                    const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to cancel the appointment');
+                    }
+                    findPatientHistory();
+                } catch (error) {
+                    console.error("Error canceling appointment:", error);
+                    alert("Could not cancel the appointment. Please try again.");
+                }
             }
-            
-            // If successful, automatically refresh the history view 
-            // so the user sees the appointment disappear.
-            findPatientHistory();
-
-        } catch (error) {
-            console.error("Error canceling appointment:", error);
-            alert("Could not cancel the appointment. Please try again.");
         }
-    }
-}
-
 
         function openModal(id) { document.getElementById(id).classList.add('is-open'); }
         
@@ -466,13 +454,10 @@ async function deleteUserAppointment(appointmentId) {
             if (id === 'status-modal' || id === 'history-modal') {
                 const statusResult = document.getElementById('status-result');
                 if (statusResult) statusResult.classList.add('hidden');
-
                 const statusCheckId = document.getElementById('status-check-id');
                 if (statusCheckId) statusCheckId.value = '';
-
                 const historyResult = document.getElementById('history-result');
                 if (historyResult) historyResult.classList.add('hidden');
-
                 const historyMobileInput = document.getElementById('history-mobile-input');
                 if (historyMobileInput) historyMobileInput.value = '';
             }

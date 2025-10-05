@@ -9,17 +9,14 @@ const app = express();
 const port = process.env.PORT || 10000;
 
 app.use(cors());
-// This line is a security risk and is not needed. It has been removed.
-// app.use(express.static(__dirname)); 
-
-// This new section correctly and safely serves your public files.
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// --- SERVE THE FRONTEND FILES (THIS IS THE FIX) ---
+// This now correctly tells the server that your HTML files are in the main directory.
+app.use(express.static(__dirname));
 
-// --- DATABASE CONNECTION SETUP (THE FIX IS HERE) ---
-// This code now correctly and securely reads the DATABASE_URL from Render's environment.
-// All the old, hardcoded details have been removed.
+// --- DATABASE CONNECTION SETUP ---
+// This code correctly and securely reads the DATABASE_URL from Render's environment.
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
