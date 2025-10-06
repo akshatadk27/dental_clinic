@@ -20,7 +20,7 @@ const pool = new Pool({
   user: 'dental_user',
   host: 'dpg-d3h7cb0gjchc73a9gbv0-a',
   database: 'dental_clinic',
-  password: 'Akshata@27',
+  password: '21xLWtWfyqtA4vQVOvkq8rbmE0tvKGRR',
   port: 5432,
   ssl: { rejectUnauthorized: false }
 });
