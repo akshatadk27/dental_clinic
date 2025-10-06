@@ -8,36 +8,38 @@ const app = express();
 // Render will provide the PORT through an environment variable.
 const port = process.env.PORT || 10000;
 
+// Middleware to enable CORS and to help the server understand JSON from your website
 app.use(cors());
-app.use(express.json()); // THE FIX IS HERE: This line is the JSON "translator" for your server.
+app.use(express.json());
 
-// This tells the server that your HTML files are in the main (root) directory.
-app.use(express.static(__dirname)); 
+// --- SERVE THE FRONTEND FILES ---
+// This correctly tells the server to serve your HTML files.
+app.use(express.static(path.join(__dirname)));
 
-// --- DATABASE CONNECTION SETUP ---
-// This is the CORRECT code. It securely reads the connection details from Render.
+// --- DATABASE CONNECTION SETUP (THIS IS THE FIX) ---
+// This code correctly and securely reads the DATABASE_URL from Render's environment,
+// ignoring any old, hardcoded passwords.
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 
-
-// --- API ENDPOINTS (No changes are needed in this section) ---
+// --- API ENDPOINTS (No changes needed in this section) ---
 
 // Get all appointments for a specific date
 app.get('/appointments/:date', async (req, res) => {
     try {
         const { date } = req.params;
         const allAppointments = await pool.query(
-            "SELECT * FROM appointments WHERE appointment_date = $1 ORDER BY slot ASC", 
+            "SELECT * FROM appointments WHERE appointment_date = $1 ORDER BY slot ASC",
             [date]
         );
         res.json(allAppointments.rows);
     } catch (err) {
-        console.error(err.message);
+        console.error("Error fetching appointments:", err.message);
         res.status(500).send("Server Error");
     }
 });
@@ -47,7 +49,7 @@ app.get('/appointment/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const appointment = await pool.query(
-            "SELECT * FROM appointments WHERE appointment_id = $1", 
+            "SELECT * FROM appointments WHERE appointment_id = $1",
             [id]
         );
         if (appointment.rows.length === 0) {
@@ -55,7 +57,7 @@ app.get('/appointment/:id', async (req, res) => {
         }
         res.json(appointment.rows[0]);
     } catch (err) {
-        console.error(err.message);
+        console.error("Error fetching single appointment:", err.message);
         res.status(500).send("Server Error");
     }
 });
@@ -63,17 +65,16 @@ app.get('/appointment/:id', async (req, res) => {
 // Create a new appointment
 app.post('/appointments', async (req, res) => {
     try {
-        // This part was failing because req.body was empty without the JSON translator
         const { id, serviceId, date, doctorId, slot, patientName, patientEmail, patientMobile } = req.body;
         const newAppointment = await pool.query(
-            `INSERT INTO appointments (appointment_id, service_id, appointment_date, doctor_id, slot, patient_name, patient_email, patient_mobile, status) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Scheduled') 
+            `INSERT INTO appointments (appointment_id, service_id, appointment_date, doctor_id, slot, patient_name, patient_email, patient_mobile, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Scheduled')
              RETURNING *`,
             [id, serviceId, date, doctorId, slot, patientName, patientEmail, patientMobile]
         );
         res.status(201).json(newAppointment.rows[0]);
     } catch (err) {
-        console.error(err.message);
+        console.error("Error creating appointment:", err.message);
         res.status(500).send("Server Error");
     }
 });
@@ -91,7 +92,7 @@ app.put('/appointments/:id/complete', async (req, res) => {
         }
         res.json({ msg: 'Appointment updated successfully', appointment: updateAppointment.rows[0] });
     } catch (err) {
-        console.error(err.message);
+        console.error("Error completing appointment:", err.message);
         res.status(500).send("Server Error");
     }
 });
@@ -109,7 +110,7 @@ app.delete('/appointments/:id', async (req, res) => {
         }
         res.json({ msg: 'Appointment deleted successfully' });
     } catch (err) {
-        console.error(err.message);
+        console.error("Error deleting appointment:", err.message);
         res.status(500).send("Server Error");
     }
 });
@@ -124,7 +125,7 @@ app.get('/appointments/history/:mobile', async (req, res) => {
         );
         res.json(patientHistory.rows);
     } catch (err) {
-        console.error(err.message);
+        console.error("Error fetching patient history:", err.message);
         res.status(500).send("Server Error");
     }
 });
