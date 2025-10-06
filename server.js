@@ -15,14 +15,12 @@ app.use(express.json()); // THE FIX IS HERE: This line is the JSON "translator" 
 app.use(express.static(__dirname)); 
 
 // --- DATABASE CONNECTION SETUP ---
-// This code correctly and securely reads the DATABASE_URL from Render's environment.
+// This is the CORRECT code. It securely reads the connection details from Render.
 const pool = new Pool({
-  user: 'dental_user',
-  host: 'dpg-d3h7cb0gjchc73a9gbv0-a',
-  database: 'dental_clinic',
-  password: '21xLWtWfyqtA4vQVOvkq8rbmE0tvKGRR',
-  port: 5432,
-  ssl: { rejectUnauthorized: false }
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 
