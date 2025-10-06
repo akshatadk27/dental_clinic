@@ -17,11 +17,14 @@ app.use(express.static(__dirname));
 // --- DATABASE CONNECTION SETUP ---
 // This code correctly and securely reads the DATABASE_URL from Render's environment.
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
+  user: 'dental_user',
+  host: 'dpg-d3h7cb0gjchc73a9gbv0-a',
+  database: 'dental_clinic',
+  password: 'Akshata@27',
+  port: 5432,
+  ssl: { rejectUnauthorized: false }
 });
+
 
 
 // --- API ENDPOINTS (No changes are needed in this section) ---
