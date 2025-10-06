@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // --- SERVE THE FRONTEND FILES ---
-// This correctly tells the server to serve your HTML files.
+// This correctly tells the server that your HTML files are in the main (root) directory.
 app.use(express.static(path.join(__dirname)));
 
 // --- DATABASE CONNECTION SETUP (THIS IS THE FIX) ---
