@@ -29,7 +29,8 @@
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-teal-600">🦷 Bright Smile Dental</h1>
             <div class="flex space-x-2">
-                <button id="history-btn" class="bg-white border border-teal-600 text-teal-600 font-semibold px-4 py-2 rounded-lg hover:bg-teal-50 transition">My History</button>
+                <!-- THIS BUTTON IS NOW A LINK TO THE NEW HISTORY PAGE -->
+                <a href="/history.html" id="history-btn" class="bg-white border border-teal-600 text-teal-600 font-semibold px-4 py-2 rounded-lg hover:bg-teal-50 transition">My History</a>
                 <button id="check-status-btn" class="bg-teal-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-teal-700 transition">Check Status</button>
             </div>
         </div>
@@ -147,25 +148,8 @@
         </div>
     </div>
 
-    <!-- Patient History Modal -->
-    <div id="history-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 relative">
-            <button onclick="closeModal('history-modal')" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-            <h2 class="text-xl font-bold mb-4">View Your Appointment History</h2>
-            <p class="text-gray-600 mb-4 text-sm">Enter the mobile number you used to book your appointments.</p>
-            <div class="flex space-x-2">
-                <input type="tel" id="history-mobile-input" placeholder="Enter your Mobile Number" class="w-full p-2 border border-gray-300 rounded-md">
-                <button id="find-history-btn" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">Find</button>
-            </div>
-            <div id="history-result" class="mt-4 hidden max-h-80 overflow-y-auto">
-                <!-- History will be rendered here -->
-            </div>
-        </div>
-    </div>
-
-
     <script>
-        const API_URL = ''; // This tells the website to send requests to the same server it was loaded from.
+        const API_URL = ''; // Uses the same domain as the website
 
         const clinicData = {
             services: [
@@ -196,8 +180,6 @@
             document.getElementById('confirm-booking-btn').addEventListener('click', confirmBooking);
             document.getElementById('check-status-btn').addEventListener('click', () => openModal('status-modal'));
             document.getElementById('check-id-btn').addEventListener('click', checkAppointmentStatus);
-            document.getElementById('history-btn').addEventListener('click', () => openModal('history-modal'));
-            document.getElementById('find-history-btn').addEventListener('click', findPatientHistory);
         });
 
         function populateServices() {
@@ -251,6 +233,10 @@
                 const slotsContainer = document.getElementById('slots-container');
                 slotsContainer.innerHTML = '';
                 
+                if (availableDoctors.length === 0) {
+                    slotsContainer.innerHTML = `<p class="text-center text-gray-500">No doctors available for this service.</p>`;
+                }
+
                 availableDoctors.forEach(doctor => {
                     const doctorDiv = document.createElement('div');
                     doctorDiv.className = 'mb-6 p-4 border-t border-gray-200';
@@ -281,7 +267,7 @@
 
             } catch (error) {
                 console.error("Error fetching slots:", error);
-                alert("Could not connect to the server. Please make sure the backend is running and accessible.");
+                alert("Could not connect to the server. Please make sure it's running and refresh the page.");
             } finally {
                 findBtn.textContent = 'Find Available Slots →';
                 findBtn.disabled = false;
@@ -372,94 +358,15 @@
                  resultDiv.innerHTML = `<p class="text-red-600 font-semibold">Could not check status. Server may be down.</p>`;
             }
         }
-        
-        async function findPatientHistory() {
-            const mobile = document.getElementById('history-mobile-input').value.trim();
-            if (!mobile) {
-                alert('Please enter a mobile number.');
-                return;
-            }
-
-            const resultDiv = document.getElementById('history-result');
-            resultDiv.classList.remove('hidden');
-            resultDiv.innerHTML = `<p>Searching for history...</p>`;
-            
-            try {
-                const response = await fetch(`${API_URL}/appointments/history/${mobile}`);
-                if (!response.ok) throw new Error('Could not fetch history');
-
-                const history = await response.json();
-                
-                if (history.length === 0) {
-                    resultDiv.innerHTML = `<p class="text-center text-gray-600 p-4">No appointments found for this mobile number.</p>`;
-                    return;
-                }
-
-                let historyHtml = '<div class="space-y-3">';
-                history.forEach(apt => {
-                    const service = clinicData.services.find(s => s.id === apt.service_id) || { name: 'N/A' };
-                    const doctor = clinicData.doctors.find(d => d.id === apt.doctor_id) || { name: 'N/A' };
-                    const formattedDate = new Date(apt.appointment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-                    
-                    historyHtml += `
-                        <div class="p-3 border rounded-lg bg-gray-50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="font-bold text-gray-800">${service.name.split(' ').slice(1).join(' ')}</p>
-                                    <p class="text-sm text-gray-600">with ${doctor.name}</p>
-                                </div>
-                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${apt.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${apt.status}</span>
-                            </div>
-                            <p class="text-sm text-gray-500 mt-2">${formattedDate} at ${apt.slot}</p>
-                            <p class="text-xs text-gray-400 mt-2 font-mono">ID: ${apt.appointment_id}</p>
-                            <div class="text-right mt-2">
-                                ${apt.status === 'Scheduled' ? 
-                                `<button onclick="deleteUserAppointment('${apt.appointment_id}')" class="text-xs bg-red-100 text-red-700 font-semibold px-3 py-1 rounded-full hover:bg-red-200">
-                                    Cancel Appointment
-                                 </button>` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                historyHtml += '</div>';
-                resultDiv.innerHTML = historyHtml;
-
-            } catch(error) {
-                console.error("Error fetching patient history:", error);
-                resultDiv.innerHTML = `<p class="text-red-600 font-semibold text-center p-4">Could not retrieve history. Server may be down.</p>`;
-            }
-        }
-
-        async function deleteUserAppointment(appointmentId) {
-            if (confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) {
-                try {
-                    const response = await fetch(`${API_URL}/appointments/${appointmentId}`, {
-                        method: 'DELETE'
-                    });
-                    if (!response.ok) {
-                        throw new Error('Failed to cancel the appointment');
-                    }
-                    findPatientHistory();
-                } catch (error) {
-                    console.error("Error canceling appointment:", error);
-                    alert("Could not cancel the appointment. Please try again.");
-                }
-            }
-        }
 
         function openModal(id) { document.getElementById(id).classList.add('is-open'); }
-        
         function closeModal(id) { 
             document.getElementById(id).classList.remove('is-open'); 
-            if (id === 'status-modal' || id === 'history-modal') {
+            if (id === 'status-modal') {
                 const statusResult = document.getElementById('status-result');
                 if (statusResult) statusResult.classList.add('hidden');
                 const statusCheckId = document.getElementById('status-check-id');
                 if (statusCheckId) statusCheckId.value = '';
-                const historyResult = document.getElementById('history-result');
-                if (historyResult) historyResult.classList.add('hidden');
-                const historyMobileInput = document.getElementById('history-mobile-input');
-                if (historyMobileInput) historyMobileInput.value = '';
             }
         }
     </script>
