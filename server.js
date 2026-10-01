@@ -14,18 +14,17 @@ app.use(express.json());
 
 // --- SERVE THE FRONTEND FILES ---
 // This correctly tells the server that your HTML files are in the main (root) directory.
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- DATABASE CONNECTION SETUP (THIS IS THE FIX) ---
 // This code correctly and securely reads the DATABASE_URL from Render's environment,
 // ignoring any old, hardcoded passwords.
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: process.env.DATABASE_URL.includes('localhost')
+        ? false
+        : { rejectUnauthorized: false }
 });
-
 
 // --- API ENDPOINTS (No changes needed in this section) ---
 
@@ -66,37 +65,28 @@ app.get('/appointment/:id', async (req, res) => {
 app.post('/appointments', async (req, res) => {
     try {
         const { id, serviceId, date, doctorId, slot, patientName, patientEmail, patientMobile } = req.body;
+
         const newAppointment = await pool.query(
             `INSERT INTO appointments (appointment_id, service_id, appointment_date, doctor_id, slot, patient_name, patient_email, patient_mobile, status)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Scheduled')
              RETURNING *`,
             [id, serviceId, date, doctorId, slot, patientName, patientEmail, patientMobile]
         );
+
         res.status(201).json(newAppointment.rows[0]);
+
     } catch (err) {
+        // PostgreSQL unique constraint violation
+        if (err.code === '23505') {
+            return res.status(409).json({
+                msg: 'This slot is already booked for the selected doctor.'
+            });
+        }
+
         console.error("Error creating appointment:", err.message);
         res.status(500).send("Server Error");
     }
 });
-
-// Mark an appointment as 'Completed'
-app.put('/appointments/:id/complete', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updateAppointment = await pool.query(
-            "UPDATE appointments SET status = 'Completed' WHERE appointment_id = $1 RETURNING *",
-            [id]
-        );
-        if (updateAppointment.rows.length === 0) {
-            return res.status(404).json({ msg: 'Appointment not found' });
-        }
-        res.json({ msg: 'Appointment updated successfully', appointment: updateAppointment.rows[0] });
-    } catch (err) {
-        console.error("Error completing appointment:", err.message);
-        res.status(500).send("Server Error");
-    }
-});
-
 // Delete an appointment
 app.delete('/appointments/:id', async (req, res) => {
     try {

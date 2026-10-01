@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Appointment History</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #e5e7eb; /* bg-gray-200 */
+        }
+        /* Styles to make the main content look like a printable document */
+        .document-view {
+            width: 100%;
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 0.5rem;
+        }
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none; }
+            .document-view {
+                box-shadow: none;
+                margin: 0;
+                max-width: 100%;
+                border-radius: 0;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-white shadow-sm no-print">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/index.html" class="text-2xl font-bold text-teal-600">🦷 Bright Smile Dental</a>
+            <button onclick="window.print()" class="bg-teal-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-teal-700 transition">Print History</button>
+        </div>
+    </header>
+    
+    <main>
+        <!-- This is the initial form the user will see -->
+        <div id="lookup-container" class="document-view">
+            <h2 class="text-2xl font-bold text-center mb-6">View Your Appointment History</h2>
+            <p class="text-gray-600 text-center mb-6">Please enter the mobile number you used to book your appointments to view your complete visit history.</p>
+            <div class="flex space-x-2 max-w-sm mx-auto">
+                <input type="tel" id="history-mobile-input" placeholder="Enter your 10-digit mobile number" class="w-full p-2 border border-gray-300 rounded-md">
+                <button id="find-history-btn" class="bg-teal-600 text-white px-6 py-2 rounded-md hover:bg-teal-700">Find</button>
+            </div>
+            <div id="lookup-error" class="text-red-600 text-center mt-4"></div>
+        </div>
+
+        <!-- This section will be hidden initially and shown after history is fetched -->
+        <div id="history-document" class="document-view hidden">
+            <!-- Document Header -->
+            <div class="flex justify-between items-start border-b pb-4 mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-teal-700">Bright Smile Dental Clinic</h1>
+                    <p class="text-gray-500">Patient Appointment Record</p>
+                </div>
+                <div class="text-right text-sm text-gray-500">
+                    <p>Generated on:</p>
+                    <p id="generation-date" class="font-semibold"></p>
+                </div>
+            </div>
+
+            <!-- Patient Details -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold border-b pb-2 mb-3">Patient Details</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <p class="text-sm text-gray-500">Patient Name</p>
+                        <p id="patient-name" class="font-semibold text-gray-800"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Mobile Number</p>
+                        <p id="patient-mobile" class="font-semibold text-gray-800"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments Table -->
+            <div>
+                <h2 class="text-xl font-semibold border-b pb-2 mb-3">Appointment History</h2>
+                <div id="history-result" class="space-y-3">
+                    <!-- History items will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = ''; // Uses the same domain as the website
+
+        const clinicData = {
+            services: [
+                { id: 's0', name: '🧐 First Visit / Consultation', price: 500 },
+                { id: 's1', name: '🦷 Root Canal', price: 8000 },
+                { id: 's2', name: '✨ Teeth Whitening', price: 5000 },
+                { id: 's4', name: '🩹 Tooth Filling', price: 2500 },
+                { id: 's5', name: '🧼 Check-up & Cleaning', price: 1000 }
+            ],
+            doctors: [
+                { id: 'd1', name: 'Dr. Aarav Sharma'}, { id: 'd2', name: 'Dr. Priya Verma'},
+                { id: 'd3', name: 'Dr. Rohan Gupta'}, { id: 'd4', name: 'Dr. Sneha Patel'},
+                { id: 'd5', name: 'Dr. Vikram Singh'}, { id: 'd6', name: 'Dr. Ananya Rao'}
+            ]
+        };
+
+        async function findPatientHistory() {
+            const mobile = document.getElementById('history-mobile-input').value.trim();
+            const errorDiv = document.getElementById('lookup-error');
+            errorDiv.textContent = '';
+
+            if (!mobile || !/^\d{10}$/.test(mobile)) {
+                errorDiv.textContent = 'Please enter a valid 10-digit mobile number.';
+                return;
+            }
+
+            const findBtn = document.getElementById('find-history-btn');
+            findBtn.textContent = 'Searching...';
+            findBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/appointments/history/${mobile}`);
+                if (!response.ok) throw new Error('Could not fetch history from the server.');
+                const history = await response.json();
+
+                if (history.length === 0) {
+                    errorDiv.textContent = 'No appointments found for this mobile number.';
+                    return;
+                }
+
+                // Populate the document view
+                document.getElementById('generation-date').textContent = new Date().toLocaleDateString('en-GB');
+                document.getElementById('patient-name').textContent = history[0].patient_name; // Assuming the name is the same for all
+                document.getElementById('patient-mobile').textContent = history[0].patient_mobile;
+
+                let historyHtml = '';
+                history.forEach(apt => {
+                    const service = clinicData.services.find(s => s.id === apt.service_id) || { name: 'N/A', price: 0 };
+                    const doctor = clinicData.doctors.find(d => d.id === apt.doctor_id) || { name: 'N/A' };
+                    const formattedDate = new Date(apt.appointment_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                    
+                    historyHtml += `
+                        <div class="p-4 border rounded-lg bg-gray-50 flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-gray-800">${service.name.split(' ').slice(1).join(' ')}</p>
+                                <p class="text-sm text-gray-600">with ${doctor.name} on ${formattedDate}</p>
+                                <p class="text-xs text-gray-400 mt-1 font-mono">ID: ${apt.appointment_id}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-gray-800">₹${service.price}</p>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${apt.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${apt.status}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('history-result').innerHTML = historyHtml;
+                
+                // Hide the lookup form and show the document
+                document.getElementById('lookup-container').classList.add('hidden');
+                document.getElementById('history-document').classList.remove('hidden');
+
+            } catch(error) {
+                console.error("Error fetching patient history:", error);
+                errorDiv.textContent = 'Could not retrieve history. The server may be down.';
+            } finally {
+                findBtn.textContent = 'Find';
+                findBtn.disabled = false;
+            }
+        }
+        
+        document.getElementById('find-history-btn').addEventListener('click', findPatientHistory);
+    </script>
+</body>
+</html>
